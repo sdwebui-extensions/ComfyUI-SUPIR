@@ -8,17 +8,10 @@ import folder_paths
 from nodes import ImageScaleBy
 from nodes import ImageScale
 import torch.cuda
-from .sgm.util import instantiate_from_config
-from .SUPIR.util import convert_dtype, load_state_dict
 import open_clip
 from contextlib import contextmanager
 
-from transformers import (
-    CLIPTextModel,
-    CLIPTokenizer,
-    CLIPTextConfig,
 
-)
 script_directory = os.path.dirname(os.path.abspath(__file__))
 
 def dummy_build_vision_tower(*args, **kwargs):
@@ -152,6 +145,9 @@ class SUPIR_Upscale:
                 control_scale, cfg_scale_start, control_scale_start, restoration_scale, keep_model_loaded,
                 a_prompt, n_prompt, sdxl_model, supir_model, use_tiled_vae, use_tiled_sampling=False, sampler_tile_size=128, sampler_tile_stride=64, captions="", diffusion_dtype="auto",
                 encoder_dtype="auto", batch_size=1, fp8_unet=False, fp8_vae=False, sampler="RestoreEDMSampler"):
+        from .sgm.util import instantiate_from_config
+        from .SUPIR.util import convert_dtype, load_state_dict
+        from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextConfig
         device = mm.get_torch_device()
         mm.unload_all_models()
 

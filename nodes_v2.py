@@ -6,27 +6,12 @@ import comfy.model_management as mm
 import folder_paths
 import torch.cuda
 import torch.nn.functional as F
-from .sgm.util import instantiate_from_config
-from .SUPIR.util import convert_dtype, load_state_dict
-from .sgm.modules.distributions.distributions import DiagonalGaussianDistribution
 import open_clip
 from contextlib import contextmanager, nullcontext
 import gc
 
 from contextlib import nullcontext
-try:
-    from accelerate import init_empty_weights
-    from accelerate.utils import set_module_tensor_to_device
-    is_accelerate_available = True
-except:
-    pass
 
-from transformers import (
-    CLIPTextModel,
-    CLIPTokenizer,
-    CLIPTextConfig,
-
-)
 script_directory = os.path.dirname(os.path.abspath(__file__))
 
 def dummy_build_vision_tower(*args, **kwargs):
@@ -48,6 +33,12 @@ def build_text_model_from_openai_state_dict(
         device,
         cast_dtype=torch.float16,    
     ):
+    try:
+        from accelerate import init_empty_weights
+        from accelerate.utils import set_module_tensor_to_device
+        is_accelerate_available = True
+    except:
+        pass
    
     embed_dim = state_dict["text_projection"].shape[1]
     context_length = state_dict["positional_embedding"].shape[0]
@@ -109,6 +100,7 @@ class SUPIR_encode:
     CATEGORY = "SUPIR"
 
     def encode(self, SUPIR_VAE, image, encoder_dtype, use_tiled_vae, encoder_tile_size):
+        from .SUPIR.util import convert_dtype
         device = mm.get_torch_device()
         mm.unload_all_models()
         if encoder_dtype == 'auto':
@@ -276,6 +268,8 @@ which is expected. Can be replaced with any other denoiser/blur or not used at a
 """
 
     def process(self, SUPIR_VAE, image, encoder_dtype, use_tiled_vae, encoder_tile_size, decoder_tile_size):
+        from .SUPIR.util import convert_dtype
+        from .sgm.modules.distributions.distributions import DiagonalGaussianDistribution
         device = mm.get_torch_device()
         mm.unload_all_models()
         if encoder_dtype == 'auto':
@@ -431,6 +425,7 @@ SUPIR Tiles -node for preview to understand how the image is tiled.
     def sample(self, SUPIR_model, latents, steps, seed, cfg_scale_end, EDM_s_churn, s_noise, positive, negative,
                 cfg_scale_start, control_scale_start, control_scale_end, restore_cfg, keep_model_loaded, DPMPP_eta,
                 sampler, sampler_tile_size=1024, sampler_tile_stride=512):
+        from .sgm.util import instantiate_from_config
         
         torch.manual_seed(seed)
         device = mm.get_torch_device()
@@ -679,6 +674,10 @@ Loads the SUPIR model and the selected SDXL model and merges them.
 """
 
     def process(self, supir_model, sdxl_model, diffusion_dtype, fp8_unet):
+        from .sgm.util import instantiate_from_config
+        from .SUPIR.util import convert_dtype, load_state_dict
+        from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextConfig
+
         device = mm.get_torch_device()
         mm.unload_all_models()
 
@@ -840,6 +839,15 @@ high_vram: uses Accelerate to load weights to GPU, slightly faster model loading
 """
 
     def process(self, supir_model, diffusion_dtype, fp8_unet, model, clip, vae, high_vram=False):
+        from .sgm.util import instantiate_from_config
+        from .SUPIR.util import convert_dtype, load_state_dict
+        from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextConfig
+        try:
+            from accelerate import init_empty_weights
+            from accelerate.utils import set_module_tensor_to_device
+            is_accelerate_available = True
+        except:
+            pass
         if high_vram:
             device = mm.get_torch_device()
         else:
@@ -1022,6 +1030,15 @@ high_vram: uses Accelerate to load weights to GPU, slightly faster model loading
 """
 
     def process(self, supir_model, diffusion_dtype, fp8_unet, model, clip_l, clip_g, vae, high_vram=False):
+        from .sgm.util import instantiate_from_config
+        from .SUPIR.util import convert_dtype, load_state_dict
+        from transformers import CLIPTextModel, CLIPTokenizer, CLIPTextConfig
+        try:
+            from accelerate import init_empty_weights
+            from accelerate.utils import set_module_tensor_to_device
+            is_accelerate_available = True
+        except:
+            pass
         if high_vram:
             device = mm.get_torch_device()
         else:
